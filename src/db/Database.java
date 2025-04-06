@@ -1,29 +1,18 @@
 package db;
-import db.exception.*;
+
+import db.exception.EntityNotFoundException;
 import java.util.ArrayList;
 
 public class Database {
-    private static Database instance;
-    private ArrayList<Entity> entities;
-    private int newId = 1;
+    private static ArrayList<Entity> entities = new ArrayList<>();
+    private static int nextId = 1;
 
-    private Database() {
-        entities = new ArrayList<>();
-    }
-
-    public static Database getInstance() {
-        if (instance == null) {
-            instance = new Database();
-        }
-        return instance;
-    }
-
-    public void add(Entity entity) {
-        entity.id = newId++;
+    public static void add(Entity entity) {
+        entity.id = nextId++;
         entities.add(entity);
     }
 
-    public Entity get(int id) throws EntityNotFoundException {
+    public static Entity get(int id) {
         for (Entity entity : entities) {
             if (entity.id == id) {
                 return entity;
@@ -32,13 +21,13 @@ public class Database {
         throw new EntityNotFoundException(id);
     }
 
-    public void delete(int id) throws EntityNotFoundException {
+    public static void delete(int id) {
         Entity entity = get(id);
         entities.remove(entity);
     }
 
-    public void update(Entity updatedEntity) throws EntityNotFoundException {
-        Entity entity = get(updatedEntity.id);
-        entities.set(entities.indexOf(entity), updatedEntity);
+    public static void update(Entity updatedEntity) {
+        Entity oldEntity = get(updatedEntity.id);
+        entities.set(entities.indexOf(oldEntity), updatedEntity);
     }
 }
