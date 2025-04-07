@@ -9,10 +9,10 @@ public class Database {
 
     public static void add(Entity entity) {
         entity.id = nextId++;
-        entities.add(entity);
+        entities.add(entity.copy());
     }
 
-    public static Entity get(int id) {
+    public static Entity get(int id) throws EntityNotFoundException {
         for (Entity entity : entities) {
             if (entity.id == id) {
                 return entity;
@@ -21,12 +21,12 @@ public class Database {
         throw new EntityNotFoundException(id);
     }
 
-    public static void delete(int id) {
+    public static void delete(int id) throws EntityNotFoundException {
         Entity entity = get(id);
         entities.remove(entity);
     }
 
-    public static void update(Entity updatedEntity) {
+    public static void update(Entity updatedEntity) throws EntityNotFoundException {
         Entity oldEntity = get(updatedEntity.id);
         entities.set(entities.indexOf(oldEntity), updatedEntity);
     }
