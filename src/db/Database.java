@@ -1,33 +1,28 @@
 package db;
 
-import db.exception.EntityNotFoundException;
-import java.util.ArrayList;
+import db.exception.*;
+import java.util.*;;
 
 public class Database {
     private static ArrayList<Entity> entities = new ArrayList<>();
     private static int nextId = 1;
+    private static HashMap<Integer, Validator> validators = new HashMap<>();
 
-    public static void add(Entity entity) {
-        entity.id = nextId++;
-        entities.add(entity.copy());
-    }
-
-    public static Entity get(int id) throws EntityNotFoundException {
-        for (Entity entity : entities) {
-            if (entity.id == id) {
-                return entity;
-            }
+    public static void registerValidator(int entityCode, Validator validator) {
+        if (validators.containsKey(entityCode)) {
+            throw new IllegalArgumentException("Validator for this entity code already exists");
         }
-        throw new EntityNotFoundException(id);
+        validators.put(entityCode, validator);
     }
 
-    public static void delete(int id) throws EntityNotFoundException {
-        Entity entity = get(id);
-        entities.remove(entity);
-    }
+    public static void add(Entity entity) throws InvalidEntityException {
+        Validator validator = validators.get(entity.getEntityCode());
+        if (validator != null) {
+            validator.validate(entity);
+        }
 
-    public static void update(Entity updatedEntity) throws EntityNotFoundException {
-        Entity oldEntity = get(updatedEntity.id);
-        entities.set(entities.indexOf(oldEntity), updatedEntity);
+        Entity copy = entity.copy();
+        copy.id = nextId++;
+        entities.add(copy);
     }
 }
