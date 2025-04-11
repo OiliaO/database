@@ -10,7 +10,7 @@ public class Database {
 
     public static void registerValidator(int entityCode, Validator validator) {
         if (validators.containsKey(entityCode)) {
-            throw new IllegalArgumentException("Validator for this entity code already exists");
+            throw new IllegalArgumentException("Validator already exists");
         }
         validators.put(entityCode, validator);
     }
@@ -23,24 +23,27 @@ public class Database {
 
         Entity copy = entity.copy();
         copy.id = nextId++;
+        Date now = new Date();
 
         if (copy instanceof Trackable) {
             Trackable trackable = (Trackable) copy;
-            Date now = new Date();
             trackable.setCreationDate(now);
             trackable.setLastModificationDate(now);
+
+            if (entity instanceof Trackable) {
+                Trackable original = (Trackable) entity;
+                original.setCreationDate(now);
+                original.setLastModificationDate(now);
+            }
         }
 
         entities.add(copy);
+        entity.id = copy.id;
     }
 
     public static Entity get(int id) throws EntityNotFoundException {
         for (Entity entity : entities) {
             if (entity.id == id) {
-                if (entity instanceof Trackable) {
-                    Trackable trackable = (Trackable) entity;
-                    return entity.copy();
-                }
                 return entity.copy();
             }
         }
@@ -53,39 +56,35 @@ public class Database {
             validator.validate(entity);
         }
 
-        int index = -1;
+        boolean found = false;
+        Date now = new Date();
+
         for (int i = 0; i < entities.size(); i++) {
             if (entities.get(i).id == entity.id) {
-                index = i;
+                Entity copy = entity.copy();
+
+                if (copy instanceof Trackable) {
+                    ((Trackable) copy).setLastModificationDate(now);
+
+                    if (entity instanceof Trackable) {
+                        ((Trackable) entity).setLastModificationDate(now);
+                    }
+                }
+
+                entities.set(i, copy);
+                found = true;
                 break;
             }
         }
-        if (index == -1) {
+
+        if (!found) {
             throw new EntityNotFoundException(entity.id);
         }
-
-        Entity copy = entity.copy();
-        if (copy instanceof Trackable) {
-            ((Trackable) copy).setLastModificationDate(new Date());
-        }
-        entities.set(index, copy);
     }
 
     public static void delete(int id) throws EntityNotFoundException {
-        for (int i = 0; i < entities.size(); i++) {
-            if (entities.get(i).id == id) {
-                entities.remove(i);
-                return;
-            }
+        if (!entities.removeIf(e -> e.id == id)) {
+            throw new EntityNotFoundException(id);
         }
-        throw new EntityNotFoundException(id);
-    }
-
-    public static List<Entity> getAll() {
-        List<Entity> copies = new ArrayList<>();
-        for (Entity entity : entities) {
-            copies.add(entity.copy());
-        }
-        return copies;
     }
 }
