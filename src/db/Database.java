@@ -1,7 +1,7 @@
 package db;
 
 import db.exception.*;
-import java.util.*;;
+import java.util.*;
 
 public class Database {
     private static ArrayList<Entity> entities = new ArrayList<>();
@@ -10,7 +10,7 @@ public class Database {
 
     public static void registerValidator(int entityCode, Validator validator) {
         if (validators.containsKey(entityCode)) {
-            throw new IllegalArgumentException("Validator for this entity code already exists");
+            throw new IllegalArgumentException("Validator already exists");
         }
         validators.put(entityCode, validator);
     }
@@ -23,6 +23,68 @@ public class Database {
 
         Entity copy = entity.copy();
         copy.id = nextId++;
+        Date now = new Date();
+
+        if (copy instanceof Trackable) {
+            Trackable trackable = (Trackable) copy;
+            trackable.setCreationDate(now);
+            trackable.setLastModificationDate(now);
+
+            if (entity instanceof Trackable) {
+                Trackable original = (Trackable) entity;
+                original.setCreationDate(now);
+                original.setLastModificationDate(now);
+            }
+        }
+
         entities.add(copy);
+        entity.id = copy.id;
+    }
+
+    public static Entity get(int id) throws EntityNotFoundException {
+        for (Entity entity : entities) {
+            if (entity.id == id) {
+                return entity.copy();
+            }
+        }
+        throw new EntityNotFoundException(id);
+    }
+
+    public static void update(Entity entity) throws InvalidEntityException, EntityNotFoundException {
+        Validator validator = validators.get(entity.getEntityCode());
+        if (validator != null) {
+            validator.validate(entity);
+        }
+
+        boolean found = false;
+        Date now = new Date();
+
+        for (int i = 0; i < entities.size(); i++) {
+            if (entities.get(i).id == entity.id) {
+                Entity copy = entity.copy();
+
+                if (copy instanceof Trackable) {
+                    ((Trackable) copy).setLastModificationDate(now);
+
+                    if (entity instanceof Trackable) {
+                        ((Trackable) entity).setLastModificationDate(now);
+                    }
+                }
+
+                entities.set(i, copy);
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            throw new EntityNotFoundException(entity.id);
+        }
+    }
+
+    public static void delete(int id) throws EntityNotFoundException {
+        if (!entities.removeIf(e -> e.id == id)) {
+            throw new EntityNotFoundException(id);
+        }
     }
 }
