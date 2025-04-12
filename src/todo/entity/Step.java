@@ -1,7 +1,6 @@
 package todo.entity;
 
 import db.Entity;
-import java.util.Date;
 
 public class Step extends Entity {
     public enum Status { NOT_STARTED, COMPLETED }
@@ -27,6 +26,11 @@ public class Step extends Entity {
     @Override
     public int getEntityCode() {
         return 21;
+    }
+
+    @Override
+    public int getId() {
+        return this.id;
     }
 
     public String getTitle() {
