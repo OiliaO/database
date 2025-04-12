@@ -2,6 +2,7 @@ package db;
 
 import db.exception.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Database {
     private static ArrayList<Entity> entities = new ArrayList<>();
@@ -10,7 +11,7 @@ public class Database {
 
     public static void registerValidator(int entityCode, Validator validator) {
         if (validators.containsKey(entityCode)) {
-            throw new IllegalArgumentException("Validator already exists");
+            throw new IllegalArgumentException("Validator already exists for entity code: " + entityCode);
         }
         validators.put(entityCode, validator);
     }
@@ -50,7 +51,7 @@ public class Database {
         throw new EntityNotFoundException(id);
     }
 
-    public static void update(Entity entity) throws InvalidEntityException, EntityNotFoundException {
+    public static void update(Entity entity) throws EntityNotFoundException, InvalidEntityException {
         Validator validator = validators.get(entity.getEntityCode());
         if (validator != null) {
             validator.validate(entity);
@@ -86,5 +87,16 @@ public class Database {
         if (!entities.removeIf(e -> e.id == id)) {
             throw new EntityNotFoundException(id);
         }
+    }
+
+    public static List<Entity> getAll(int entityCode) {
+        return entities.stream()
+                .filter(e -> e.getEntityCode() == entityCode)
+                .map(Entity::copy)
+                .collect(Collectors.toList());
+    }
+
+    public static List<Entity> getAll() {
+        return new ArrayList<>(entities);
     }
 }

@@ -6,4 +6,6 @@ public abstract class Entity {
     public abstract int getEntityCode();
 
     public abstract Entity copy();
+
+    public abstract int getId();
 }
